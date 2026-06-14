@@ -165,6 +165,10 @@
         <code>org.apache.catalina.security.TLSCertificateReloadListener</code>.
         (markt)
       </fix>
+      <fix>
+        When setting the initial HTTP/2 connection limit, apply those limits
+        earlier. (markt)
+      </fix>
     </changelog>
   </subsection>
   <subsection name="Jasper">
