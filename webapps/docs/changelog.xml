@@ -145,6 +145,10 @@
         <code>NullPointerException</code>, if an attempt is made to use the
         <code>AsyncContext</code> after it has been recycled. (markt)
       </fix>
+      <fix>
+        Align size tracking for multipart requests with FileUpload's use of
+        <code>long</code>. (schultz)
+      </fix>
     </changelog>
   </subsection>
   <subsection name="Coyote">

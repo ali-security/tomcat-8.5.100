@@ -2848,16 +2848,16 @@ public class Request implements HttpServletRequest {
             try {
                 List<FileItem> items = upload.parseRequest(new ServletRequestContext(this));
                 int maxPostSize = getConnector().getMaxPostSize();
-                int postSize = 0;
+                long postSize = 0;
                 Charset charset = getCharset();
                 for (FileItem item : items) {
                     ApplicationPart part = new ApplicationPart(item, location);
-                    parts.add(part);
                     if (part.getSubmittedFileName() == null) {
                         String name = part.getName();
                         if (maxPostSize >= 0) {
                             // Have to calculate equivalent size. Not completely
                             // accurate but close enough.
+                            // Name
                             postSize += name.getBytes(charset).length;
                             // Equals sign
                             postSize++;
@@ -2878,6 +2878,7 @@ public class Request implements HttpServletRequest {
                         }
                         parameters.addParameter(name, value);
                     }
+                    parts.add(part);
                 }
 
                 success = true;
