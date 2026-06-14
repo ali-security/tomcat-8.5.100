@@ -1,0 +1,39 @@
+name: Build tomcat-embed-core
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # Same base image the agentic-sealer builder used for 8.5.100
+    container: eclipse-temurin:17.0.10_7-jdk
+    env:
+      ANT_OPTS: "-Xmx2g"
+      LC_ALL: C.UTF-8
+      LANG: C.UTF-8
+    steps:
+      - name: Install build deps + Ant 1.10.14
+        run: |
+          apt-get update && apt-get install -y curl unzip git && rm -rf /var/lib/apt/lists/*
+          curl -fsSL https://archive.apache.org/dist/ant/binaries/apache-ant-1.10.14-bin.tar.gz | tar -xz -C /opt
+          ln -s /opt/apache-ant-1.10.14/bin/ant /usr/local/bin/ant
+
+      - uses: actions/checkout@v4
+
+      - name: Build tomcat-embed-core
+        run: |
+          # Exclude SSL/TLS + environment-dependent tests (mirrors the sealed build)
+          cat > build.properties <<'PROPS'
+          test.exclude=**/*SSL*.java,**/*Ssl*.java,**/TestClientCert*.java,**/TestMapperWebapps.java,**/TestLargeUpload.java,**/TestHttp2*.java
+          execute.test.apr=false
+          PROPS
+          ant test package embed-jars
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tomcat-embed-core-8.5.100
+          path: output/embed/tomcat-embed-core.jar
+          if-no-files-found: error
