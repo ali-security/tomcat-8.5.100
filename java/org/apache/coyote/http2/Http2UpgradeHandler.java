@@ -1481,7 +1481,11 @@ class Http2UpgradeHandler extends AbstractStream implements InternalHttpUpgradeH
 
 
     public void setMaxConcurrentStreams(long maxConcurrentStreams) {
-        localSettings.set(Setting.MAX_CONCURRENT_STREAMS, maxConcurrentStreams);
+        /*
+         * Force set these initial limits. A well-behaved client should ACK the settings and adhere to them before it
+         * reaches the limits anyway.
+         */
+        localSettings.set(Setting.MAX_CONCURRENT_STREAMS, maxConcurrentStreams, true);
     }
 
 
@@ -1491,7 +1495,11 @@ class Http2UpgradeHandler extends AbstractStream implements InternalHttpUpgradeH
 
 
     public void setInitialWindowSize(int initialWindowSize) {
-        localSettings.set(Setting.INITIAL_WINDOW_SIZE, initialWindowSize);
+        /*
+         * Force set these initial limits. A well-behaved client should ACK the settings and adhere to them before it
+         * reaches the limits anyway.
+         */
+        localSettings.set(Setting.INITIAL_WINDOW_SIZE, initialWindowSize, true);
     }
 
 
