@@ -114,6 +114,7 @@
   <!-- Java EE 7 platform requires Java 7+ -->
   <!-- Keep in sync with webapps/docs/tomcat-docs.xsl -->
   <property name="compile.release" value="7"/>
+  <property name="compile.release.test" value="8"/>
   <property name="min.java.version" value="7"/>
   <property name="build.java.version" value="11"/>
 
@@ -1485,7 +1486,7 @@
     <javac srcdir="test" destdir="${test.classes}"
            debug="${compile.debug}"
            deprecation="${compile.deprecation}"
-           release="${compile.release}"
+           release="${compile.release.test}"
            encoding="ISO-8859-1"
            includeantruntime="true">
       <classpath refid="tomcat.test.classpath" />
