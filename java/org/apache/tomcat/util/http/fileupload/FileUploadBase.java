@@ -136,6 +136,13 @@ public abstract class FileUploadBase {
     private long fileCountMax = -1;
 
     /**
+     * The maximum size permitted for a single part header, as opposed to
+     * {@link MultipartStream#HEADER_PART_SIZE_MAX}. A value of -1 indicates
+     * no custom limit (the default constant is used).
+     */
+    private int partHeaderSizeMax = -1;
+
+    /**
      * The content encoding to use when reading part headers.
      */
     private String headerEncoding;
@@ -227,6 +234,14 @@ public abstract class FileUploadBase {
      */
     public void setFileCountMax(final long fileCountMax) {
         this.fileCountMax = fileCountMax;
+    }
+
+    public int getPartHeaderSizeMax() {
+        return partHeaderSizeMax;
+    }
+
+    public void setPartHeaderSizeMax(int partHeaderSizeMax) {
+        this.partHeaderSizeMax = partHeaderSizeMax;
     }
 
     /**

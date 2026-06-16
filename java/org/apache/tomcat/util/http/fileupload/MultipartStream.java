@@ -261,6 +261,11 @@ public class MultipartStream {
     private String headerEncoding;
 
     /**
+     * The configured maximum header size, or -1 to use the default constant.
+     */
+    private int headerSizeMax = -1;
+
+    /**
      * The progress notifier, if any, or null.
      */
     private final ProgressNotifier notifier;
@@ -360,6 +365,10 @@ public class MultipartStream {
      */
     public void setHeaderEncoding(final String encoding) {
         headerEncoding = encoding;
+    }
+
+    public void setHeaderSizeMax(int headerSizeMax) {
+        this.headerSizeMax = headerSizeMax;
     }
 
     /**
@@ -519,10 +528,11 @@ public class MultipartStream {
             } catch (final IOException e) {
                 throw new MalformedStreamException("Stream ended unexpectedly");
             }
-            if (++size > HEADER_PART_SIZE_MAX) {
+            int limit = headerSizeMax > 0 ? headerSizeMax : HEADER_PART_SIZE_MAX;
+            if (++size > limit) {
                 throw new MalformedStreamException(String.format(
                         "Header section has more than %s bytes (maybe it is not properly terminated)",
-                        Integer.valueOf(HEADER_PART_SIZE_MAX)));
+                        Integer.valueOf(limit)));
             }
             if (b == HEADER_SEPARATOR[i]) {
                 i++;
