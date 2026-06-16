@@ -16,6 +16,8 @@
  */
 package org.apache.catalina.servlets;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -51,6 +53,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.catalina.WebResource;
 import org.apache.catalina.connector.RequestFacade;
 import org.apache.catalina.util.DOMWriter;
+import org.apache.catalina.util.IOTools;
 import org.apache.catalina.util.XMLWriter;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.apache.tomcat.util.http.ConcurrentDateFormat;
@@ -190,6 +193,12 @@ public class WebdavServlet extends DefaultServlet {
     private static final int MAX_TIMEOUT = 604800;
 
 
+    /*
+     * Default max request body size.
+     */
+    private static final int DEFAULT_MAX_REQUEST_BODY_SIZE = 8388608;
+
+
     /**
      * Default namespace.
      */
@@ -242,6 +251,9 @@ public class WebdavServlet extends DefaultServlet {
     private int maxDepth = 3;
 
 
+    private int maxRequestBodySize = DEFAULT_MAX_REQUEST_BODY_SIZE;
+
+
     /**
      * Is access allowed via WebDAV to the special paths (/WEB-INF and /META-INF)?
      */
@@ -264,6 +276,10 @@ public class WebdavServlet extends DefaultServlet {
 
         if (getServletConfig().getInitParameter("maxDepth") != null) {
             maxDepth = Integer.parseInt(getServletConfig().getInitParameter("maxDepth"));
+        }
+
+        if (getServletConfig().getInitParameter("maxRequestBodySize") != null) {
+            maxRequestBodySize = Integer.parseInt(getServletConfig().getInitParameter("maxRequestBodySize"));
         }
 
         if (getServletConfig().getInitParameter("allowSpecialPaths") != null) {
@@ -487,11 +503,31 @@ public class WebdavServlet extends DefaultServlet {
 
         Node propNode = null;
 
-        if (req.getContentLengthLong() > 0) {
+        // Short-cut if client provided a content length
+        if (req.getContentLengthLong() > maxRequestBodySize) {
+            resp.sendError(WebdavStatus.SC_REQUEST_TOO_LONG);
+            return;
+        }
+
+        byte[] body;
+        try (InputStream is = req.getInputStream();
+                BoundedByteArrayOutputStream os = new BoundedByteArrayOutputStream(maxRequestBodySize)) {
+            IOTools.flow(is, os);
+            body = os.toByteArray();
+        } catch (IOException ioe) {
+            resp.sendError(WebdavStatus.SC_BAD_REQUEST);
+            return;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            resp.sendError(WebdavStatus.SC_REQUEST_TOO_LONG);
+            return;
+        }
+
+        if (body.length > 0) {
             DocumentBuilder documentBuilder = getDocumentBuilder();
 
             try {
-                Document document = documentBuilder.parse(new InputSource(req.getInputStream()));
+                Document document = documentBuilder.parse(
+                        new InputSource(new ByteArrayInputStream(body)));
 
                 // Get the root element of the document
                 Element rootElement = document.getDocumentElement();
@@ -912,15 +948,39 @@ public class WebdavServlet extends DefaultServlet {
 
         Node lockInfoNode = null;
 
-        DocumentBuilder documentBuilder = getDocumentBuilder();
+        // Short-cut if client provided a content length
+        if (req.getContentLengthLong() > maxRequestBodySize) {
+            resp.sendError(WebdavStatus.SC_REQUEST_TOO_LONG);
+            return;
+        }
 
-        try {
-            Document document = documentBuilder.parse(new InputSource(req.getInputStream()));
+        byte[] body;
+        try (InputStream is = req.getInputStream();
+                BoundedByteArrayOutputStream os = new BoundedByteArrayOutputStream(maxRequestBodySize)) {
+            IOTools.flow(is, os);
+            body = os.toByteArray();
+        } catch (IOException ioe) {
+            resp.sendError(WebdavStatus.SC_BAD_REQUEST);
+            return;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            resp.sendError(WebdavStatus.SC_REQUEST_TOO_LONG);
+            return;
+        }
 
-            // Get the root element of the document
-            Element rootElement = document.getDocumentElement();
-            lockInfoNode = rootElement;
-        } catch (IOException | SAXException e) {
+        if (body.length > 0) {
+            DocumentBuilder documentBuilder = getDocumentBuilder();
+
+            try {
+                Document document = documentBuilder.parse(
+                        new InputSource(new ByteArrayInputStream(body)));
+
+                // Get the root element of the document
+                Element rootElement = document.getDocumentElement();
+                lockInfoNode = rootElement;
+            } catch (IOException | SAXException e) {
+                lockRequestType = LOCK_REFRESH;
+            }
+        } else {
             lockRequestType = LOCK_REFRESH;
         }
 
@@ -2338,6 +2398,36 @@ public class WebdavServlet extends DefaultServlet {
         public InputSource resolveEntity(String publicId, String systemId) {
             context.log(sm.getString("webdavservlet.externalEntityIgnored", publicId, systemId));
             return new InputSource(new StringReader("Ignored external entity"));
+        }
+    }
+
+
+    static class BoundedByteArrayOutputStream extends ByteArrayOutputStream {
+
+        private final int sizeLimit;
+        private int size;
+
+        BoundedByteArrayOutputStream(int sizeLimit) {
+            super();
+            this.sizeLimit = sizeLimit;
+        }
+
+        @Override
+        public synchronized void write(int b) {
+            size++;
+            if (size > sizeLimit) {
+                throw new ArrayIndexOutOfBoundsException();
+            }
+            super.write(b);
+        }
+
+        @Override
+        public synchronized void write(byte[] b, int off, int len) {
+            size += len;
+            if (size > sizeLimit) {
+                throw new ArrayIndexOutOfBoundsException();
+            }
+            super.write(b, off, len);
         }
     }
 }
