@@ -19,6 +19,7 @@ package org.apache.catalina.realm;
 import java.security.Principal;
 import java.security.cert.X509Certificate;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -75,6 +76,11 @@ public class LockOutRealm extends CombinedRealm {
      * recent.
      */
     protected Map<String,LockRecord> failedUsers = null;
+
+    /*
+     * Should user names (the keys) in the failedUsers Map be treated in a case sensitive manner. The default is false.
+     */
+    private boolean caseSensitive = false;
 
 
     @Override
@@ -210,6 +216,9 @@ public class LockOutRealm extends CombinedRealm {
      * time will be recorded and any attempt to authenticated a locked user will log a warning.
      */
     public boolean isLocked(String username) {
+        if (!getCaseSensitive()) {
+            username = username.toLowerCase(Locale.ROOT);
+        }
         LockRecord lockRecord = null;
         synchronized (this) {
             lockRecord = failedUsers.get(username);
@@ -235,6 +244,9 @@ public class LockOutRealm extends CombinedRealm {
      * After successful authentication, any record of previous authentication failure is removed.
      */
     private synchronized void registerAuthSuccess(String username) {
+        if (!getCaseSensitive()) {
+            username = username.toLowerCase(Locale.ROOT);
+        }
         // Successful authentication means removal from the list of failed users
         failedUsers.remove(username);
     }
@@ -244,6 +256,9 @@ public class LockOutRealm extends CombinedRealm {
      * After a failed authentication, add the record of the failed authentication.
      */
     private void registerAuthFailure(String username) {
+        if (!getCaseSensitive()) {
+            username = username.toLowerCase(Locale.ROOT);
+        }
         LockRecord lockRecord = null;
         synchronized (this) {
             if (!failedUsers.containsKey(username)) {
@@ -348,6 +363,16 @@ public class LockOutRealm extends CombinedRealm {
      */
     public void setCacheRemovalWarningTime(int cacheRemovalWarningTime) {
         this.cacheRemovalWarningTime = cacheRemovalWarningTime;
+    }
+
+
+    public boolean getCaseSensitive() {
+        return caseSensitive;
+    }
+
+
+    public void setCaseSensitive(boolean caseSensitive) {
+        this.caseSensitive = caseSensitive;
     }
 
 
