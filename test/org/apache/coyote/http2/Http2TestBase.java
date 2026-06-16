@@ -220,7 +220,8 @@ public abstract class Http2TestBase extends TomcatBaseTest {
         for (Header header : headers) {
             mimeHeaders.addValue(header.getName()).setString(header.getValue());
         }
-        hpackEncoder.encode(mimeHeaders, headersPayload);
+        // Don't force lower case to allow testing with upper case field names
+        hpackEncoder.encode(mimeHeaders, headersPayload, false);
         if (padding != null) {
             headersPayload.put(padding);
         }
@@ -1135,7 +1136,7 @@ public abstract class Http2TestBase extends TomcatBaseTest {
         public void headersEnd(int streamId, boolean endOfStream) {
             trace.append(streamId + "-HeadersEnd\n");
             if (endOfStream) {
-                receivedEndOfStream(streamId) ;
+                receivedEndOfStream(streamId);
             }
         }
 
@@ -1405,7 +1406,7 @@ public abstract class Http2TestBase extends TomcatBaseTest {
         @Override
         protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
-            Map<String, String[]> params = req.getParameterMap();
+            Map<String,String[]> params = req.getParameterMap();
 
             resp.setContentType("text/plain");
             resp.setCharacterEncoding("UTF-8");

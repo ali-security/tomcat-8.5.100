@@ -24,7 +24,6 @@ import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
@@ -313,10 +312,7 @@ class Stream extends AbstractNonZeroStream implements HeaderEmitter {
             log.trace(sm.getString("stream.header.debug", getConnectionId(), getIdAsString(), name, value));
         }
 
-        // Header names must be lower case
-        if (!name.toLowerCase(Locale.US).equals(name)) {
-            throw new HpackException(sm.getString("stream.header.case", getConnectionId(), getIdAsString(), name));
-        }
+        // Field header names being all lower case is enforced in HpackDecoder.
 
         if (HTTP_CONNECTION_SPECIFIC_HEADERS.contains(name)) {
             throw new HpackException(

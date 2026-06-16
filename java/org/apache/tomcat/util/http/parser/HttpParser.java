@@ -37,7 +37,7 @@ public class HttpParser {
 
     private static final Log log = LogFactory.getLog(HttpParser.class);
 
-    private static final int ARRAY_SIZE = 128;
+    private static final int ARRAY_SIZE = 256;
 
     private static final boolean[] IS_CONTROL = new boolean[ARRAY_SIZE];
     private static final boolean[] IS_SEPARATOR = new boolean[ARRAY_SIZE];
@@ -52,6 +52,8 @@ public class HttpParser {
     private static final boolean[] IS_SUBDELIM = new boolean[ARRAY_SIZE];
     private static final boolean[] IS_USERINFO = new boolean[ARRAY_SIZE];
     private static final boolean[] IS_RELAXABLE = new boolean[ARRAY_SIZE];
+    private static final boolean[] IS_FIELD_VCHAR = new boolean[ARRAY_SIZE];
+    private static final boolean[] IS_FIELD_CONTENT = new boolean[ARRAY_SIZE];
 
     private static final HttpParser DEFAULT;
 
@@ -80,7 +82,6 @@ public class HttpParser {
                 IS_HEX[i] = true;
             }
 
-            // Not valid for HTTP protocol
             // "HTTP/" DIGIT "." DIGIT
             if (i == 'H' || i == 'T' || i == 'P' || i == '/' || i == '.' || (i >= '0' && i <= '9')) {
                 IS_HTTP_PROTOCOL[i] = true;
@@ -118,6 +119,16 @@ public class HttpParser {
             if (i == '\"' || i == '<' || i == '>' || i == '[' || i == '\\' || i == ']' || i == '^' || i == '`' ||
                     i == '{' || i == '|' || i == '}') {
                 IS_RELAXABLE[i] = true;
+            }
+
+            // field-vchar is VCHAR / obs-text
+            if (i > 20 && i < 127 || i > 127) {
+                IS_FIELD_VCHAR[i] = true;
+            }
+
+            // field-content  = field-vchar [ 1*( SP / HTAB / field-vchar ) field-vchar ]
+            if (IS_FIELD_VCHAR[i] || i == '\t' || i == ' ') {
+                IS_FIELD_CONTENT[i] = true;
             }
         }
 
@@ -412,10 +423,29 @@ public class HttpParser {
 
 
     public static boolean isControl(int c) {
-        // Fast for valid control characters, slower for some incorrect
-        // ones
+        // Fast for valid control characters, slower for some incorrect ones
         try {
             return IS_CONTROL[c];
+        } catch (ArrayIndexOutOfBoundsException ex) {
+            return false;
+        }
+    }
+
+
+    public static boolean isFieldVChar(int c) {
+        // Fast for valid field-vchar characters, slower for some incorrect ones
+        try {
+            return IS_FIELD_VCHAR[c];
+        } catch (ArrayIndexOutOfBoundsException ex) {
+            return false;
+        }
+    }
+
+
+    public static boolean isFieldContent(int c) {
+        // Fast for valid field-content characters, slower for some incorrect ones
+        try {
+            return IS_FIELD_CONTENT[c];
         } catch (ArrayIndexOutOfBoundsException ex) {
             return false;
         }
