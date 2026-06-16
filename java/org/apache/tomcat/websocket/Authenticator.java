@@ -50,7 +50,7 @@ public abstract class Authenticator {
     @Deprecated
     public String getAuthorization(String requestUri, String authenticateHeader, Map<String, Object> userProperties)
             throws AuthenticationException {
-        return getAuthorization(requestUri, authenticateHeader,
+        return getAuthorization("GET", requestUri, authenticateHeader,
                 (String) userProperties.get(Constants.WS_AUTHENTICATION_USER_NAME),
                 (String) userProperties.get(Constants.WS_AUTHENTICATION_PASSWORD),
                 (String) userProperties.get(Constants.WS_AUTHENTICATION_REALM));
@@ -69,8 +69,31 @@ public abstract class Authenticator {
      * @return The generated authorization header value
      *
      * @throws AuthenticationException When an error occurs
+     *
+     * @deprecated Use {@link #getAuthorization(String, String, String, String, String, String)}
      */
-    public abstract String getAuthorization(String requestUri, String authenticateHeader, String userName,
+    @Deprecated
+    public String getAuthorization(String requestUri, String authenticateHeader, String userName,
+            String userPassword, String userRealm) throws AuthenticationException {
+        return getAuthorization("GET", requestUri, authenticateHeader, userName, userPassword, userRealm);
+    }
+
+    /**
+     * Generate the authorization header value that will be sent to the server.
+     *
+     * @param method             The request method
+     * @param requestUri         The request URI
+     * @param authenticateHeader The server authentication header received
+     * @param userName           The user name
+     * @param userPassword       The user password
+     * @param userRealm          The realm for which the provided user name and password are valid. {@code null} to
+     *                               indicate all realms.
+     *
+     * @return The generated authorization header value
+     *
+     * @throws AuthenticationException When an error occurs
+     */
+    public abstract String getAuthorization(String method, String requestUri, String authenticateHeader, String userName,
             String userPassword, String userRealm) throws AuthenticationException;
 
 

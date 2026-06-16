@@ -342,6 +342,9 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
 
             if (httpResponse.status != 101) {
                 if (isRedirectStatus(httpResponse.status)) {
+                    // HTTP redirect. Authentication either successful or not required.
+                    userProperties.remove(Constants.AUTHORIZATION_HEADER_NAME);
+
                     List<String> locationHeader = httpResponse.getHandshakeResponse().getHeaders()
                             .get(Constants.LOCATION_HEADER_NAME);
 
@@ -383,6 +386,9 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
                             sm.getString("wsWebSocketContainer.invalidStatus", Integer.toString(httpResponse.status)));
                 }
             }
+            // HTTP upgrade successful. Authentication either successful or not required.
+            userProperties.remove(Constants.AUTHORIZATION_HEADER_NAME);
+
             HandshakeResponse handshakeResponse = httpResponse.getHandshakeResponse();
             clientEndpointConfiguration.getConfigurator().afterResponse(handshakeResponse);
 
@@ -496,10 +502,10 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
                     Integer.valueOf(httpResponse.status), authScheme));
         }
 
-        String requestUri = new String(request.array(), StandardCharsets.ISO_8859_1).split("\\s", 3)[1];
+        String authenticationUri = new String(request.array(), StandardCharsets.ISO_8859_1).split("\\s", 3)[1];
 
         userProperties.put(authenticationType.getAuthorizationHeaderName(),
-                auth.getAuthorization(requestUri, authenticateHeaders.get(0),
+                auth.getAuthorization("GET", authenticationUri, authenticateHeaders.get(0),
                         (String) userProperties.get(authenticationType.getUserNameProperty()),
                         (String) userProperties.get(authenticationType.getUserPasswordProperty()),
                         (String) userProperties.get(authenticationType.getUserRealmProperty())));
