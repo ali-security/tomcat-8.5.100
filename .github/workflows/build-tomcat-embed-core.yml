@@ -10,6 +10,7 @@ jobs:
     # Same base image the agentic-sealer builder used for 8.5.100
     container: eclipse-temurin:17.0.10_7-jdk
     env:
+      ANT_HOME: /opt/apache-ant-1.10.14
       ANT_OPTS: "-Xmx2g"
       LC_ALL: C.UTF-8
       LANG: C.UTF-8
@@ -30,10 +31,12 @@ jobs:
           execute.test.apr=false
           PROPS
           ant test package embed-jars
+          mkdir -p build_output
+          cp output/embed/tomcat-embed-core.jar build_output/tomcat-embed-core-8.5.100.jar
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: tomcat-embed-core-8.5.100
-          path: output/embed/tomcat-embed-core.jar
+          path: build_output/tomcat-embed-core-8.5.100.jar
           if-no-files-found: error
