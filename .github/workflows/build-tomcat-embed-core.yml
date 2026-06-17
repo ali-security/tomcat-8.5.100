@@ -1,7 +1,7 @@
 name: Build tomcat-embed-core
 on:
   push:
-    branches: [main, agentic]
+    branches: [main, agentic, agentic2]
   workflow_dispatch:
 
 jobs:
