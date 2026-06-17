@@ -84,6 +84,7 @@ public class TestMapperWebapps extends TomcatBaseTest {
         }
     }
 
+    @org.junit.Ignore("Requires examples webapp fully built - environment-dependent")
     @Test
     public void testContextReload_Bug56658_Bug56882() throws Exception {
         Tomcat tomcat = getTomcatInstance();

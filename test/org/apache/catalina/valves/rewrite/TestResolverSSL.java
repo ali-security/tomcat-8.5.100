@@ -34,6 +34,7 @@ import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.net.SSLHostConfig;
 import org.apache.tomcat.util.net.TesterSupport;
 
+@org.junit.Ignore("SSL tests require certificates/keystores - environment-dependent")
 public class TestResolverSSL extends TomcatBaseTest {
 
     @Test
